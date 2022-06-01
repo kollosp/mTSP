@@ -49,19 +49,28 @@ std::vector<unsigned int> GeneticAlgorithm::mutate(const std::vector<unsigned in
     return ret;
 }
 
-GeneticAlgorithm::GeneticAlgorithm(Graph &graph):
-    Algorithm(graph)
+GeneticAlgorithm::GeneticAlgorithm(CPPGraph &graph, DisplayArgument& displayArgument):
+    Algorithm(graph, displayArgument, "Genetic")
 {
 }
 
-std::vector<std::vector<unsigned int> >  GeneticAlgorithm::run()
+void GeneticAlgorithm::run()
 {
+    //std::cout<<"void GeneticAlgorithm::run()"<<std::endl;;
     std::vector<unsigned int> destinations = getDestinations();
+
+    for(unsigned int i=0;i<graph().size();++i){
+        graph().vertex(i).setArtificialFlag(0);
+    }
+    for(unsigned int i=0;i<destinations.size();++i){
+        graph().vertex(destinations[i]).setArtificialFlag(1);
+    }
+
 
     unsigned int truckNo = this->truckNo();
     unsigned int start = startVertex();
     std::vector<std::vector<unsigned int> > solution;
-    bestSolution() = std::numeric_limits<double>::max();
+    bestSolution() = std::numeric_limits<CPPWeight>::max();
 
     std::vector<unsigned int> splitters;
     splitters.push_back(0);
@@ -79,15 +88,19 @@ std::vector<std::vector<unsigned int> >  GeneticAlgorithm::run()
         currentDistanceSolution() = 0;
         currentTimeSolution() = 0;
         std::vector<std::vector<unsigned int> > currentSolutionPath;
+        //std::cout<<"void GeneticAlgorithm::run() "<<generationCount<<std::endl;;
+
         std::vector<std::vector<unsigned int> > population = createGeneration(parent, splitters);
 
 
-        double bestPopulation = std::numeric_limits<double>::max();
+        CPPWeight bestPopulation = std::numeric_limits<CPPWeight>::max();
         for(unsigned int k=0;k<population.size();++k){
+            //std::cout<<"void GeneticAlgorithm::run() "<<generationCount<<" "<<k<<std::endl;;
+
             for(unsigned int i=0;i<truckNo;++i){
 
                 //only when set is not empty
-                double TPSWeight;
+                CPPWeight TPSWeight;
                 //take destination vertices from all destinations
                 std::vector<unsigned int> dests(population[k].begin()+splitters[i], population[k].begin()+splitters[i+1]);
                 //remove already visited vertices
@@ -121,6 +134,7 @@ std::vector<std::vector<unsigned int> >  GeneticAlgorithm::run()
 
         }
 
+
         //check if current solution is better then the best
         if(bestSolution() > currentSolution()){
             bestTimeSolution() = currentTimeSolution();
@@ -128,25 +142,48 @@ std::vector<std::vector<unsigned int> >  GeneticAlgorithm::run()
             bestSolution() = currentSolution();
             //save best solution paths
             solution = currentSolutionPath;
-
-            std::cout<<"Znaleziono nowe minium. Pokolenie: "<<generationCount<<std::endl;
-            std::cout<<"Waga biezacego rozwiazania = "<<bestSolution()<<std::endl;
-            std::cout<<"Trasy ciezarowek: "<<std::endl;
-            std::cout<<solution<<std::endl;
+            //std::cout<<"New best found"<<std::endl;
         }
+
+        //display progress
+        displayArgument().paths = currentSolutionPath;
+        notify();
     }
 
     currentSolution() = bestSolution();
     currentTimeSolution() = bestTimeSolution();
     currentDistanceSolution() = bestDistanceSolution();
 
-    std::cout<<"=== ROZWIAZANIE === "<<std::endl;
-    std::cout<<"ALGORYTM GENETYCZNY"<<std::endl;
-    std::cout<<"Wierzcholki docelowe: "<<destinations<<", liczba ciezarowek: "<<truckNo<<std::endl;
-    std::cout<<"Waga najlepszego rozwiazania = "<<bestSolution()<<std::endl;
-    std::cout<<"Trasy ciezarowek: "<<std::endl;
-    std::cout<<solution<<std::endl;
-    return solution;
+    /*std::cout<<"GENETIC RESULT"<<std::endl;
+    std::cout<<"Destinations: "<<destinations<<", trucks: "<<truckNo<<std::endl;
+    std::cout<<"tsp sololution = "<<bestSolution()<<std::endl;
+    std::cout<<"Trucks paths: "<<std::endl;
+    std::cout<<solution<<std::endl;*/
+
+    displayArgument().paths = solution;
+
+    notify(Observer::EVENT_RELOAD);
+}
+
+unsigned int GeneticAlgorithm::getGenerations() const
+{
+
+    return generations;
+}
+
+unsigned int &GeneticAlgorithm::getGenerations()
+{
+    return generations;
+}
+
+unsigned int GeneticAlgorithm::getPopulation() const
+{
+    return  population;
+}
+
+unsigned int &GeneticAlgorithm::getPopulation()
+{
+    return  population;
 }
 
 unsigned int GeneticAlgorithm::calculateRequiredGenCount(unsigned int destinationsCount)
@@ -187,13 +224,13 @@ std::vector<std::vector<unsigned int> > GeneticAlgorithm::createGeneration(const
 
 
 
-std::vector<unsigned int> GeneticAlgorithm::solveTSP(unsigned int start, std::vector<unsigned int> destinations, double &shortestDistance){
+std::vector<unsigned int> GeneticAlgorithm::solveTSP(unsigned int start, std::vector<unsigned int> destinations, CPPWeight& shortestDistance){
     //odd vertices is an ordered list of vertices so it is the first permutation
     std::vector<unsigned int> lastGenerationBest = destinations;
     std::vector<unsigned int> ret;
     //CPPGraph origin = graph();
 
-    shortestDistance = std::numeric_limits<double>::max();
+    shortestDistance = std::numeric_limits<CPPWeight>::max();
 
     unsigned int genCalculated = calculateRequiredGenCount(destinations.size());
 
@@ -204,14 +241,15 @@ std::vector<unsigned int> GeneticAlgorithm::solveTSP(unsigned int start, std::ve
         std::vector<std::vector<unsigned int> > population = createGeneration(lastGenerationBest);
 
         //always use best of current population
-        double currentSolution = std::numeric_limits<double>::max();
+        CPPWeight currentSolution = std::numeric_limits<CPPWeight>::max();
 
         //calculate value of each individual
         for(unsigned int j=0;j<population.size();++j){
 
             //itereate throught all pairs in selected permutation.
             //find every possible roads between vertices in pair.
-            double individualSolution = graph().computeShortestComplexPath(start, population[j]);
+            CPPWeight individualSolution;
+            std::vector<unsigned int> currentPath = graph().computeShortestComplexPath(start, population[j], &individualSolution);
 
             //best of current population
             if(individualSolution < currentSolution){
@@ -223,7 +261,7 @@ std::vector<unsigned int> GeneticAlgorithm::solveTSP(unsigned int start, std::ve
             //check if current is better then known best solution
             if(currentSolution < shortestDistance){
                 shortestDistance = currentSolution;
-                ret = population[j];
+                ret = currentPath;
                 //save best solution individual index, to use it to build new generation
                 bestSolutionIndex = j;
             }
@@ -235,4 +273,9 @@ std::vector<unsigned int> GeneticAlgorithm::solveTSP(unsigned int start, std::ve
     }
 
     return ret;
+}
+
+void GeneticAlgorithm::applyParams() noexcept
+{
+
 }

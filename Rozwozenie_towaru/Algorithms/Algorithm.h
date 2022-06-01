@@ -1,6 +1,11 @@
 #ifndef ALGORITHM_H
 #define ALGORITHM_H
-#include"../Graph/Graph.h"
+
+#include <Monitor/Observable.h>
+#include <Graph/GraphTypes.h>
+#include "../Helpers/DisplayArguments.h"
+
+
 
 /*
  *
@@ -14,18 +19,45 @@
 /**
  * @brief The Algorytm class Basic class of algorytms, Provide the simplest and most common algorytm processing functions and i
  */
-class Algorithm
+class Algorithm : public Observable
 {
 public:
-    Graph& _graph;
-    double _bestSolution;
-    double _currentSolution;
+    /**
+     * @brief The ConfigParam class def name and value of parameter
+     */
+    class ConfigParam {
+    public:
+        enum Type {
+            NUMBER = 1,
+            STRING = 2
+        };
+    private:
+        std::string _name;
+        std::string _value;
+        Type _type;
 
-    double _bestTimeSolution;
-    double _currentTimeSolution;
+    public:
+        ConfigParam(const std::string& name, const Type& type, const std::string &value="");
+        const std::string& name() const noexcept;
+        std::string &name() noexcept;
+        const std::string &value() const noexcept;
+        std::string& value() noexcept;
+        const Type& type() const noexcept;
+        Type& type() noexcept;
+    };
 
-    double _bestDistanceSolution;
-    double _currentDistanceSolution;
+    CPPGraph& _graph;
+    CPPGraph _bestGraph;
+    CPPWeight _bestSolution;
+    CPPWeight _currentSolution;
+
+    CPPWeight _bestTimeSolution;
+    CPPWeight _currentTimeSolution;
+
+    CPPWeight _bestDistanceSolution;
+    CPPWeight _currentDistanceSolution;
+
+    DisplayArgument& _displayArgument;
 
     /**
      * @brief _timeFactor defines which travel parameter is more important. Time or distance.
@@ -45,9 +77,10 @@ private:
      * @brief _name name of the algorytm used in gui
      */
     std::string _name;
+    std::vector<ConfigParam> _params;
 
 public:
-    Algorithm(Graph& graph);
+    Algorithm(CPPGraph& graph, DisplayArgument& DisplayArgument, const std::string&name);
     virtual ~Algorithm();
 
     float timeFactor() const;
@@ -55,15 +88,18 @@ public:
     float distanceFactor();
     void initGraph();
 
-    const std::string& name() const ;
+    const std::string& name() const noexcept;
+
+    const std::vector<ConfigParam>& params() const noexcept;
+    std::vector<ConfigParam>& params() noexcept;
 
     const std::vector<unsigned int>& getDestinations() const;
-    std::vector<unsigned int> &getDestinations();
+    std::vector<unsigned int>& getDestinations();
 
-    unsigned int startVertex() const ;
-    unsigned int& startVertex()  ;
-    unsigned int truckNo() const ;
-    unsigned int& truckNo()  ;
+    unsigned int startVertex() const noexcept;
+    unsigned int& startVertex()  noexcept;
+    unsigned int truckNo() const noexcept;
+    unsigned int& truckNo()  noexcept;
 
     void setDestinations(const std::vector<unsigned int>& dest);
 
@@ -84,34 +120,74 @@ public:
     }
 
     /**
+     * @brief applyParams Funcion transform values form configuration into useful paraemeters stored as class members.
+     */
+    virtual void applyParams() noexcept = 0;
+
+    /**
      * @brief run run algorithm
      */
-    virtual std::vector<std::vector<unsigned int> > run() = 0;
+    virtual void run() = 0;
 
     /**
      * @brief getCurrentGraph. If algorythm is observered by gui then it sends notification when each loop has been finished. When
      *  oberveris notificated then it checks state of the current best graph path/graph.
      * @return
      */
-    const Graph& getCurrentGraph() const ;
+    const CPPGraph& getCurrentGraph() const noexcept;
+    const CPPGraph& getBestGraph() const noexcept;
 
 protected:
+    void addParam(const ConfigParam& param);
 
-    Graph &graph() ;
+    CPPGraph &graph() noexcept;
+    CPPGraph &bestGraph() noexcept;
+
+    DisplayArgument& displayArgument() noexcept;
 
 public:
-    double &bestSolution() ;
-    double &currentSolution() ;
+    CPPWeight &bestSolution() noexcept;
+    CPPWeight &currentSolution() noexcept;
 
-    double &bestTimeSolution() ;
-    double &currentTimeSolution() ;
+    CPPWeight &bestTimeSolution() noexcept;
+    CPPWeight &currentTimeSolution() noexcept;
 
-    double &bestDistanceSolution() ;
-    double &currentDistanceSolution() ;
+    CPPWeight &bestDistanceSolution() noexcept;
+    CPPWeight &currentDistanceSolution() noexcept;
+
+    template< class T>
+    bool nextSet(const std::vector<std::vector<T> >& possibility, std::vector<unsigned int>& controlVector, unsigned int currentIndex = 0);
 
     template<class T>
     void perm(std::vector<std::vector<T>>& permutations,std::vector<T>& vector, unsigned int position = 0);
 };
+
+
+
+template<class T>
+bool Algorithm::nextSet(const std::vector<std::vector<T> > &possibility, std::vector<unsigned int> &controlVector, unsigned int currentIndex)
+{
+    bool returnValue = true;
+    if(currentIndex == possibility.size()-1){
+        controlVector.at(currentIndex) ++;
+    }else{
+        nextSet(possibility, controlVector, currentIndex+1);
+    }
+
+    if(controlVector.at(currentIndex) >= possibility.at(currentIndex).size()){
+        controlVector.at(currentIndex) = 0;
+
+        if(currentIndex != 0){
+            controlVector.at(currentIndex - 1) ++;
+            returnValue = true;
+        }else{
+            //all permutaiotns done, we are again in the first (0,0,0,....,0)
+            returnValue = false;
+        }
+    }
+
+    return returnValue;
+}
 
 template<class T>
 void Algorithm::perm(std::vector<std::vector<T>>& permutations,std::vector<T>& vector, unsigned int position) {

@@ -5,19 +5,6 @@
 #include <vector>
 #include <iomanip>
 
-template < class T >
-inline std::ostream& print (std::ostream& os, const std::vector<T>& v, const std::string& delimitter = " ")
-{
-    for(unsigned int i=0;i<v.size();++i){
-        os<<v.at(i);
-        if(i != v.size()-1){
-            os<<delimitter;
-        }
-    }
-    return os;
-}
-
-
 inline std::ostream& operator << (std::ostream& os, const std::vector<std::vector<float> >& v)
 {
     os<<std::fixed;

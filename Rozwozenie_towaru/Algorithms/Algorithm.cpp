@@ -1,7 +1,7 @@
 #include "Algorithm.h"
 
-Algorithm::Algorithm(Graph &graph) :
-    _graph(graph)
+Algorithm::Algorithm(CPPGraph &graph, DisplayArgument& displayArgument, const std::string &name) :
+    _graph(graph), _displayArgument(displayArgument), _name(name)
 {
 
 }
@@ -29,8 +29,23 @@ float Algorithm::distanceFactor()
 
 void Algorithm::initGraph()
 {
-    _bestSolution = 0;
-    _currentSolution = 0;
+    _bestSolution = CPPWeight();
+    _currentSolution = CPPWeight();
+}
+
+const std::string &Algorithm::name() const noexcept
+{
+    return _name;
+}
+
+const std::vector<Algorithm::ConfigParam> &Algorithm::params() const noexcept
+{
+    return _params;
+}
+
+std::vector<Algorithm::ConfigParam> &Algorithm::params() noexcept
+{
+    return _params;
 }
 
 const std::vector<unsigned int> &Algorithm::getDestinations() const
@@ -43,22 +58,22 @@ std::vector<unsigned int> &Algorithm::getDestinations()
     return destinations;
 }
 
-unsigned int Algorithm::startVertex() const
+unsigned int Algorithm::startVertex() const noexcept
 {
     return _startVertex;
 }
 
-unsigned int &Algorithm::startVertex()
+unsigned int &Algorithm::startVertex() noexcept
 {
     return _startVertex;
 }
 
-unsigned int Algorithm::truckNo() const
+unsigned int Algorithm::truckNo() const noexcept
 {
     return _truckNo;
 }
 
-unsigned int &Algorithm::truckNo()
+unsigned int &Algorithm::truckNo() noexcept
 {
     return _truckNo;
 }
@@ -68,42 +83,98 @@ void Algorithm::setDestinations(const std::vector<unsigned int> &dest)
     destinations = dest;
 }
 
-const Graph &Algorithm::getCurrentGraph() const
+const CPPGraph &Algorithm::getCurrentGraph() const noexcept
 {
     return _graph;
 }
 
-Graph &Algorithm::graph()
+const CPPGraph &Algorithm::getBestGraph() const noexcept
+{
+    return _bestGraph;
+}
+
+void Algorithm::addParam(const Algorithm::ConfigParam &param)
+{
+    _params.push_back(param);
+}
+
+CPPGraph& Algorithm::graph() noexcept
 {
     return _graph;
 }
 
-double &Algorithm::bestSolution()
+CPPGraph &Algorithm::bestGraph() noexcept
+{
+    return _bestGraph;
+}
+
+DisplayArgument &Algorithm::displayArgument() noexcept
+{
+    return _displayArgument;
+}
+
+CPPWeight &Algorithm::bestSolution() noexcept
 {
     return _bestSolution;
 }
 
-double &Algorithm::currentSolution()
+CPPWeight &Algorithm::currentSolution() noexcept
 {
     return _currentSolution;
 }
 
-double &Algorithm::bestTimeSolution()
+CPPWeight &Algorithm::bestTimeSolution() noexcept
 {
     return _bestTimeSolution;
 }
 
-double &Algorithm::currentTimeSolution()
+CPPWeight &Algorithm::currentTimeSolution() noexcept
 {
     return _currentTimeSolution;
 }
 
-double &Algorithm::bestDistanceSolution()
+CPPWeight &Algorithm::bestDistanceSolution() noexcept
 {
     return _bestDistanceSolution;
 }
 
-double &Algorithm::currentDistanceSolution()
+CPPWeight &Algorithm::currentDistanceSolution() noexcept
 {
     return _currentDistanceSolution;
+}
+
+Algorithm::ConfigParam::ConfigParam(const std::string &name, const Algorithm::ConfigParam::Type &type, const std::string& value)
+    : _name(name), _value(value), _type(type)
+{
+
+}
+
+const std::string &Algorithm::ConfigParam::name() const noexcept
+{
+    return _name;
+}
+
+std::string &Algorithm::ConfigParam::name() noexcept
+{
+    return _name;
+}
+
+const std::string &Algorithm::ConfigParam::value() const noexcept
+{
+    return  _value;
+}
+
+std::string &Algorithm::ConfigParam::value() noexcept
+{
+    return _value;
+}
+
+const Algorithm::ConfigParam::Type &Algorithm::ConfigParam::type() const noexcept
+{
+    return _type;
+}
+
+Algorithm::ConfigParam::Type &Algorithm::ConfigParam::type() noexcept
+{
+    return _type;
 }

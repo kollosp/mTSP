@@ -12,10 +12,17 @@ class GeneticAlgorithm : public Algorithm
     std::vector< unsigned int > mutate(const std::vector<unsigned int>& parent);
 
 public:
-    GeneticAlgorithm(Graph& graph);
+    GeneticAlgorithm(CPPGraph& graph, DisplayArgument &displayArgument);
 
-    std::vector<unsigned int> solveTSP(unsigned int start, std::vector<unsigned int> destinations, double& shortestDistance);
-    std::vector<std::vector<unsigned int> > run() override;
+    std::vector<unsigned int> solveTSP(unsigned int start, std::vector<unsigned int> destinations, CPPWeight& shortestDistance);
+    void run() override;
+
+    unsigned int getGenerations() const;
+    unsigned int& getGenerations();
+
+    unsigned int getPopulation() const;
+    unsigned int& getPopulation();
+
 
     /**
      * @brief calculateRequiredGenCount function is required because if destinations count is low then algorithm do much more iteration then
@@ -24,6 +31,8 @@ public:
      */
     unsigned int calculateRequiredGenCount(unsigned int destinationsCount);
 
+
+    virtual void applyParams() noexcept override;
     std::vector<unsigned int> mutate(const std::vector<unsigned int> &parent, const std::vector<unsigned int> &splitter);
     std::vector<std::vector<unsigned int> > createGeneration(const std::vector<unsigned int> &parent, const std::vector<unsigned int> &splitter);
 };
